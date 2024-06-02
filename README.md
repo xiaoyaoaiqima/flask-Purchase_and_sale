@@ -15,7 +15,7 @@
 ## 配置环境
 1. 配置mysql
 2. 配置python 3.9
-3. pip install -r requirement.txt
+3. pip3 install  -i https://mirrors.aliyun.com/pypi/simple/ some-package
 
 ## 项目初始化
 1. 导入sql包，运行sql
