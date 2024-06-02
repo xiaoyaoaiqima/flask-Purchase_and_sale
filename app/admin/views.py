@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
-# author:Agam
-# datetime:2018-11-05
+# sam1
+# datetime:2024-6-02
 
 
 import os
@@ -16,33 +16,37 @@ from app.admin.forms import LoginForm, RegisterForm, addsuppliers, increasePurch
     returnordersearch, goodssearch, addgoodsname, suppliersserach, salesorderssearch, returnsalessearch, customesserch, \
     addcustomes, warehouseserch, enteringwarehouseserach, outWarehousingsearch, \
     addsection, adddutys, powerss, addsaleorder, bumens, alertpasswd, wjpasswd, beifenser
-from app.admin.uilt import get_verify_code, bars, lines, pies, on_created
+from app.admin.uilt import get_verify_code, bar_chart, line_chart, pie_chart, on_created
 from app.models import User, Purchase, goods, supplier, client, section, duty, inwarehouse, stock, sealreturngoods, \
     warehouse, returngoods, sales, power
 
 
 def admin_login_req(f):
     @wraps(f)
-    def decorated_function(*args,**kwargs):
+    def decorated_function(*args, **kwargs):
         if 'admin' not in session:
-            return redirect(url_for("admin.login",next=request.url))
-        return f(*args,**kwargs)
+            return redirect(url_for("admin.login", next=request.url))
+        return f(*args, **kwargs)
+
     return decorated_function
+
 
 def admin_power(f):
     @wraps(f)
-    def admin_function(*args,**kwargs):
-        if session['power']!='root' :
+    def admin_function(*args, **kwargs):
+        if session['power'] != 'root':
             return render_template("admin/errorroot.html")
-        return f(*args,**kwargs)
+        return f(*args, **kwargs)
+
     return admin_function
 
+
 # 登陆模块
-@admin.route("/login/",methods=["GET","POST"])
+@admin.route("/login/", methods=["GET", "POST"])
 def login():
     """登陆路由"""
 
-    form=LoginForm()
+    form = LoginForm()
     if form.validate_on_submit():
         data = form.data
         admin = User.query.filter_by(user_count=data['account']).first()
@@ -58,7 +62,7 @@ def login():
             return redirect(url_for("admin.login"))
         power_name = db.session.query(power.power_name).filter_by(power_name=admins[0]).first()
         session["admin"] = data['account']
-        session['power']=power_name[0]
+        session['power'] = power_name[0]
         return redirect(request.args.get("next") or url_for("admin.index"))
     return render_template("admin/login.html", form=form)
 
@@ -76,18 +80,19 @@ def code():
     session['image'] = code
     return response
 
+
 # 注册路由
-@admin.route("/register/",methods=["GET","POST"])
+@admin.route("/register/", methods=["GET", "POST"])
 def register():
     """注册路由"""
-    form=RegisterForm()
+    form = RegisterForm()
     if form.validate_on_submit():
         data = form.data
         names = User.query.filter_by(user_count=data['account']).count()
         if names == 1:
             flash('注册失败')
             return redirect(url_for("admin.register"))
-        ses=['','男','女']
+        ses = ['', '男', '女']
         names = User(
             user_count=data['account'],
             user_pwd=generate_password_hash((data['pwd'])),
@@ -102,7 +107,8 @@ def register():
         flash("注册成功")
 
         return redirect(url_for("admin.login"))
-    return render_template("admin/register.html",form=form)
+    return render_template("admin/register.html", form=form)
+
 
 # 忘记密码路由
 @admin.route("/forgetpws/")
@@ -114,35 +120,36 @@ def forgetpws():
 @admin.route("/")
 @admin_login_req
 def index():
-    return render_template("admin/index.html",name=session["admin"])
+    return render_template("admin/index.html", name=session["admin"])
+
+
 @admin.route("/workPlatform/")
 @admin_login_req
 def workPlatform():
-    purchases=len(Purchase.query.all())
-    saless=len(sales.query.all())
-    warehouses=len(warehouse.query.all())
-    names={"purchases":purchases,"saless":saless,"warehouses":warehouses}
-    return render_template("admin/workPlatform.html",name=session["admin"],names=names)
+    purchases = len(Purchase.query.all())
+    saless = len(sales.query.all())
+    warehouses = len(warehouse.query.all())
+    names = {"purchases": purchases, "saless": saless, "warehouses": warehouses}
+    return render_template("admin/workPlatform.html", name=session["admin"], names=names)
+
 
 # 退出
 @admin.route('/logout')
 @admin_login_req
 def logout():
-    session.pop('admin',None)
+    session.pop('admin', None)
     return redirect(url_for("admin.login"))
-
-
 
 
 # 采购模块
 # 供应商
-@admin.route("/supplier/<int:page>",methods=["GET","POST"])
+@admin.route("/supplier/<int:page>", methods=["GET", "POST"])
 @admin_login_req
 def suppliers(page=None):
-    form=suppliersserach()
+    form = suppliersserach()
     if page is None:
         page = 1
-    if form.data['name'] is None or form.data['name']=='':
+    if form.data['name'] is None or form.data['name'] == '':
         page_data = supplier.query.order_by(
             supplier.supplier_id.desc()
         ).paginate(page=page, per_page=4)
@@ -150,15 +157,16 @@ def suppliers(page=None):
     if form.data['name'].strip():
         page_data = supplier.query.order_by(
             supplier.supplier_id.desc()
-        ).filter(form.data['name']==supplier.supplier_name).paginate(page=page, per_page=4)
+        ).filter(form.data['name'] == supplier.supplier_name).paginate(page=page, per_page=4)
 
         return render_template("admin/supplier.html", form=form, page_data=page_data)
 
+
 # 删除供应商
-@admin.route("/dellsupplier/",methods=["GET"])
+@admin.route("/dellsupplier/", methods=["GET"])
 @admin_login_req
 def dellsupplier():
-    ids=request.args.get('id')
+    ids = request.args.get('id')
     names = supplier.query.filter_by(supplier_id=ids).first()
     try:
         db.session.delete(names)
@@ -170,10 +178,10 @@ def dellsupplier():
 
 
 # 添加供应商
-@admin.route("/addSupplier/",methods=["GET","POST"])
+@admin.route("/addSupplier/", methods=["GET", "POST"])
 @admin_login_req
 def addSupplier():
-    form=addsuppliers()
+    form = addsuppliers()
     if form.validate_on_submit():
         data = form.data
         names = supplier.query.filter_by(supplier_name=data['name']).count()
@@ -188,29 +196,32 @@ def addSupplier():
         db.session.add(names)
         db.session.commit()
         time.sleep(2)
-    return render_template("admin/addSupplier.html",form=form)
+    return render_template("admin/addSupplier.html", form=form)
 
 
 # 采购订单
-@admin.route("/purchaseOrder/<int:page>",methods=["GET","POST"])
+@admin.route("/purchaseOrder/<int:page>", methods=["GET", "POST"])
 @admin_login_req
 def purchaseOrder(page=None):
-    form=purchsearch()
+    form = purchsearch()
     if page is None:
         page = 1
-    if (form.data['goods_name'] is None or form.data['goods_name']=='') and(form.data['person_name'] is None or form.data['person_name'] ==''):
-        page_data = db.session.query(Purchase.purchase_id,Purchase.purchase_num,Purchase.purchase_count,Purchase.purchase_price,
-                                     Purchase.purchase_supplier,Purchase.purchase_user_name,Purchase.purchase_goods,Purchase.purchase_addtime,
+    if (form.data['goods_name'] is None or form.data['goods_name'] == '') and (
+            form.data['person_name'] is None or form.data['person_name'] == ''):
+        page_data = db.session.query(Purchase.purchase_id, Purchase.purchase_num, Purchase.purchase_count,
+                                     Purchase.purchase_price,
+                                     Purchase.purchase_supplier, Purchase.purchase_user_name, Purchase.purchase_goods,
+                                     Purchase.purchase_addtime,
                                      goods.goods_price).order_by(
             Purchase.purchase_id.desc()
         ).filter_by(purchase_goods=goods.goods_name).paginate(page=page, per_page=4)
 
         return render_template("admin/purchaseOrder.html", form=form, page_data=page_data)
 
-    if (form.data['goods_name'].strip()) and (form.data['person_name'] is None or form.data['person_name'] ==''):
+    if (form.data['goods_name'].strip()) and (form.data['person_name'] is None or form.data['person_name'] == ''):
         page_data = Purchase.query.order_by(
             Purchase.purchase_id.desc()
-        ).filter(form.data['goods_name']==Purchase.purchase_goods).paginate(page=page, per_page=4)
+        ).filter(form.data['goods_name'] == Purchase.purchase_goods).paginate(page=page, per_page=4)
 
         return render_template("admin/purchaseOrder.html", form=form, page_data=page_data)
 
@@ -218,38 +229,40 @@ def purchaseOrder(page=None):
             form.data['person_name'].strip()):
         page_data = Purchase.query.order_by(
             Purchase.purchase_id.desc()
-        ).filter(form.data['person_name']==Purchase.purchase_user_name).paginate(page=page, per_page=4)
+        ).filter(form.data['person_name'] == Purchase.purchase_user_name).paginate(page=page, per_page=4)
         return render_template("admin/purchaseOrder.html", form=form, page_data=page_data)
 
+
 # 添加订单
-@admin.route("/increasePurchaseOrder/",methods=["GET","POST"])
+@admin.route("/increasePurchaseOrder/", methods=["GET", "POST"])
 @admin_login_req
 def increasePurchaseOrder():
-    form=increasePurchaseOrders()
+    form = increasePurchaseOrders()
     if form.validate_on_submit():
         data = form.data
-        good_names=goods.query.filter_by(goods_id=data['goods_name']).first()
-        ywy=User.query.filter_by(user_id=data['ywy']).first()
-        gys=supplier.query.filter_by(supplier_id=data['gys']).first()
+        good_names = goods.query.filter_by(goods_id=data['goods_name']).first()
+        ywy = User.query.filter_by(user_id=data['ywy']).first()
+        gys = supplier.query.filter_by(supplier_id=data['gys']).first()
         names = Purchase(
             purchase_goods=good_names.goods_name,
             purchase_count=data['num'],
             purchase_supplier=gys.supplier_name,
             purchase_user_name=ywy.user_name,
-            purchase_price=float(data['num'])*float(good_names.goods_price),
+            purchase_price=float(data['num']) * float(good_names.goods_price),
             purchase_num=on_created()
         )
         db.session.add(names)
         db.session.commit()
         time.sleep(2)
 
-    return render_template("admin/increasePurchaseOrder.html",form=form)
+    return render_template("admin/increasePurchaseOrder.html", form=form)
+
 
 # 删除订单
-@admin.route("/dell/",methods=['GET'])
+@admin.route("/dell/", methods=['GET'])
 @admin_login_req
 def dell():
-    ids=request.args.get('id')
+    ids = request.args.get('id')
     names = Purchase.query.filter_by(purchase_id=ids).first()
     try:
         db.session.delete(names)
@@ -259,14 +272,17 @@ def dell():
         db.session.flush()
     return "success"
 
+
 # 入库订单
-@admin.route("/inwarehouses/",methods=['GET'])
+@admin.route("/inwarehouses/", methods=['GET'])
 @admin_login_req
 def inwarehouses():
-    ids=request.args.get('id')
+    ids = request.args.get('id')
     ids = Purchase.query.filter_by(purchase_id=ids).first()
-    sql = 'insert into inwarehouse(inwarehouse_num,inwarehouse_count,inwarehouse_price,inwarehouse_goods,inwarehouse_supplier,inwarehouse_user_name) select purchase_num,purchase_count,purchase_price,purchase_goods,purchase_supplier,purchase_user_name from purchase where purchase_id={0}'.format(ids)
-    sql_warehouse='insert into warehouse(warehouse_goods_num,warehouse_goods_name,warehouse_supplier_name) select purchase.purchase_count,goods.goods_name,purchase.purchase_supplier from purchase,goods where purchase.purchase_goods=goods.goods_name and purchase_id={0}'.format(ids)
+    sql = 'insert into inwarehouse(inwarehouse_num,inwarehouse_count,inwarehouse_price,inwarehouse_goods,inwarehouse_supplier,inwarehouse_user_name) select purchase_num,purchase_count,purchase_price,purchase_goods,purchase_supplier,purchase_user_name from purchase where purchase_id={0}'.format(
+        ids)
+    sql_warehouse = 'insert into warehouse(warehouse_goods_num,warehouse_goods_name,warehouse_supplier_name) select purchase.purchase_count,goods.goods_name,purchase.purchase_supplier from purchase,goods where purchase.purchase_goods=goods.goods_name and purchase_id={0}'.format(
+        ids)
 
     try:
         db.session.execute(sql)
@@ -277,9 +293,6 @@ def inwarehouses():
         db.session.flush()
 
     return "success"
-
-
-
 
 
 # 采购退货单的存储
@@ -299,36 +312,35 @@ def returngood():
 
     return "success"
 
+
 # 采购退货单
-@admin.route("/returnOrder/<int:page>",methods=['GET',"POST"])
+@admin.route("/returnOrder/<int:page>", methods=['GET', "POST"])
 @admin_login_req
 def returnOrder(page=None):
     form = returnordersearch()
     if page is None:
         page = 1
-    if (form.data['goods_name'] is None or form.data['goods_name']=='') and(form.data['person_name'] is None or form.data['person_name'] ==''):
+    if (form.data['goods_name'] is None or form.data['goods_name'] == '') and (
+            form.data['person_name'] is None or form.data['person_name'] == ''):
         page_data = returngoods.query.order_by(
             returngoods.returngoods_id.desc()
         ).paginate(page=page, per_page=4)
         return render_template("admin/returnOrder.html", form=form, page_data=page_data)
-    if (form.data['goods_name'].strip()) and (form.data['person_name'] is None or form.data['person_name'] ==''):
+    if (form.data['goods_name'].strip()) and (form.data['person_name'] is None or form.data['person_name'] == ''):
         page_data = returngoods.query.order_by(
             returngoods.returngoods_id.desc()
-        ).filter(form.data['goods_name']==returngoods.returngoods_goods).paginate(page=page, per_page=4)
+        ).filter(form.data['goods_name'] == returngoods.returngoods_goods).paginate(page=page, per_page=4)
         return render_template("admin/returnOrder.html", form=form, page_data=page_data)
     if (form.data['goods_name'] is None or form.data['goods_name'] == '') and (
             form.data['person_name'].strip()):
         page_data = returngoods.query.order_by(
             returngoods.returngoods_id.desc()
-        ).filter(form.data['person_name']==returngoods.returngoods_user_name).paginate(page=page, per_page=4)
+        ).filter(form.data['person_name'] == returngoods.returngoods_user_name).paginate(page=page, per_page=4)
         return render_template("admin/returnOrder.html", form=form, page_data=page_data)
 
 
-
-
-
 # 商品类型模块
-@admin.route("/categoryOfGoods/<int:page>",methods=["GET","POST"])
+@admin.route("/categoryOfGoods/<int:page>", methods=["GET", "POST"])
 @admin_login_req
 def categoryOfGoods(page=None):
     form = goodssearch()
@@ -346,12 +358,11 @@ def categoryOfGoods(page=None):
         return render_template("admin/categoryOfGoods.html", form=form, page_data=page_data)
 
 
-
 # 删除商品种类
-@admin.route("/dellgoods/",methods=['GET'])
+@admin.route("/dellgoods/", methods=['GET'])
 @admin_login_req
 def dellgoods():
-    ids=request.args.get('id')
+    ids = request.args.get('id')
     names = goods.query.filter_by(goods_id=ids).first()
     try:
         db.session.delete(names)
@@ -363,10 +374,10 @@ def dellgoods():
 
 
 # 添加商品
-@admin.route("/addTradeName/",methods=["GET","POST"])
+@admin.route("/addTradeName/", methods=["GET", "POST"])
 @admin_login_req
 def addTradeName():
-    form=addgoodsname()
+    form = addgoodsname()
     if form.validate_on_submit():
         data = form.data
         names = goods.query.filter_by(goods_name=data['name']).count()
@@ -382,16 +393,12 @@ def addTradeName():
         db.session.commit()
         flash("添加商品成功")
         time.sleep(2)
-    return render_template("admin/addTradeName.html",form=form)
-
-
-
-
+    return render_template("admin/addTradeName.html", form=form)
 
 
 # 销售模块
 # 销售订单
-@admin.route("/salesOrder/<int:page>",methods=["GET","POST"])
+@admin.route("/salesOrder/<int:page>", methods=["GET", "POST"])
 @admin_login_req
 def salesOrder(page=None):
     form = salesorderssearch()
@@ -416,7 +423,8 @@ def salesOrder(page=None):
                                      sales.sales_addtime,
                                      client.client_name).order_by(
             sales.sales_id.desc()
-        ).filter_by(form.data['goods_name'] == sales.sales_goods_name,sales_client_id=client.client_id).paginate(page=page, per_page=4)
+        ).filter_by(form.data['goods_name'] == sales.sales_goods_name, sales_client_id=client.client_id).paginate(
+            page=page, per_page=4)
         return render_template("admin/salesOrder.html", form=form, page_data=page_data)
 
     if (form.data['goods_name'] is None or form.data['goods_name'] == '') and (
@@ -427,15 +435,16 @@ def salesOrder(page=None):
                                      sales.sales_addtime,
                                      client.client_name).order_by(
             sales.sales_id.desc()
-        ).filter_by(form.data['goods_name'] == sales.sales_user_name,sales_client_id=client.client_id).paginate(page=page, per_page=4)
+        ).filter_by(form.data['goods_name'] == sales.sales_user_name, sales_client_id=client.client_id).paginate(
+            page=page, per_page=4)
         return render_template("admin/salesOrder.html", form=form, page_data=page_data)
 
 
 # 删除销售订单
-@admin.route("/dellsaleses/",methods=["GET"])
+@admin.route("/dellsaleses/", methods=["GET"])
 @admin_login_req
 def dellsaleses():
-    ids=request.args.get('id')
+    ids = request.args.get('id')
     names = sales.query.filter_by(sales_id=ids).first()
     try:
         db.session.delete(names)
@@ -447,14 +456,14 @@ def dellsaleses():
 
 
 # 增加销售订单
-@admin.route("/addsalesOrder/",methods=["GET","POST"])
+@admin.route("/addsalesOrder/", methods=["GET", "POST"])
 @admin_login_req
 def addsalesOrder():
-    form=addsaleorder()
+    form = addsaleorder()
     if form.validate_on_submit():
         data = form.data
         warehouse_names = db.session.query(warehouse.warehouse_goods_name).filter_by(warehouse_id=data['goods_name'])
-        goods_names=goods.query.filter_by(goods_name=warehouse_names).first()
+        goods_names = goods.query.filter_by(goods_name=warehouse_names).first()
 
         ywy = User.query.filter_by(user_id=data['ywy']).first()
         gk = client.query.filter_by(client_id=data['gk']).first()
@@ -472,18 +481,19 @@ def addsalesOrder():
         db.session.add(names)
         db.session.commit()
         time.sleep(2)
-    return render_template("admin/addsalesOrder.html",form=form)
+    return render_template("admin/addsalesOrder.html", form=form)
 
 
 # 销售出库
-@admin.route("/outwarehouses/",methods=['GET'])
+@admin.route("/outwarehouses/", methods=['GET'])
 @admin_login_req
 def outwarehouses():
-
-    ids=request.args.get('id')
-    sales_goods_name=db.session.query(sales.sales_goods_name,sales.sales_count).filter_by(sales_id=ids).first()
-    warehouse_goods=db.session.query(warehouse.warehouse_goods_num).filter_by(warehouse_goods_name=sales_goods_name.sales_goods_name).first()
-    sql = 'insert into stock(stock_num,stock_count,stock_price,stock_goods,stock_supplier,stock_user_name) select sales_num,sales_count,sales_price,sales_goods_name,sales_client_id,sales_user_name from sales where sales_id={0}'.format(ids)
+    ids = request.args.get('id')
+    sales_goods_name = db.session.query(sales.sales_goods_name, sales.sales_count).filter_by(sales_id=ids).first()
+    warehouse_goods = db.session.query(warehouse.warehouse_goods_num).filter_by(
+        warehouse_goods_name=sales_goods_name.sales_goods_name).first()
+    sql = 'insert into stock(stock_num,stock_count,stock_price,stock_goods,stock_supplier,stock_user_name) select sales_num,sales_count,sales_price,sales_goods_name,sales_client_id,sales_user_name from sales where sales_id={0}'.format(
+        ids)
 
     try:
         db.session.execute(sql)
@@ -495,14 +505,14 @@ def outwarehouses():
     return "success"
 
 
-
 # 销售退货
 @admin.route("/returnsalegoods/")
 @admin_login_req
 def returnsalegoods():
     ids = request.args.get('id')
     ids = sales.query.filter_by(sales_id=ids).first()
-    sql = 'insert into sealreturngoods(sealreturngoods_num,sealreturngoods_count,sealreturngoods_price,sealreturngoods_goods,sealreturngoods_supplier,sealreturngoods_user_name) select sales_num,sales_count,sales_price,sales_goods_name,sales_client_id,sales_user_name from sales where sales_id={0}'.format(ids)
+    sql = 'insert into sealreturngoods(sealreturngoods_num,sealreturngoods_count,sealreturngoods_price,sealreturngoods_goods,sealreturngoods_supplier,sealreturngoods_user_name) select sales_num,sales_count,sales_price,sales_goods_name,sales_client_id,sales_user_name from sales where sales_id={0}'.format(
+        ids)
     try:
         db.session.execute(sql)
         db.session.commit()
@@ -514,10 +524,10 @@ def returnsalegoods():
 
 
 # 销售退货单
-@admin.route("/returnSales/<int:page>",methods=["GET","POST"])
+@admin.route("/returnSales/<int:page>", methods=["GET", "POST"])
 @admin_login_req
 def returnSales(page=None):
-    form=returnsalessearch()
+    form = returnsalessearch()
     if page is None:
         page = 1
 
@@ -540,7 +550,8 @@ def returnSales(page=None):
                                      sealreturngoods.sealreturngoods_addtime,
                                      client.client_name).order_by(
             sealreturngoods.sealreturngoods_id.desc()
-        ).filter_by(form.data['goods_name'] == sealreturngoods.sealreturngoods_goods, sealreturngoods_supplier=client.client_id).paginate(
+        ).filter_by(form.data['goods_name'] == sealreturngoods.sealreturngoods_goods,
+                    sealreturngoods_supplier=client.client_id).paginate(
             page=page, per_page=4)
         return render_template("admin/returnSales.html", form=form, page_data=page_data)
     if (form.data['goods_name'] is None or form.data['goods_name'] == '') and (
@@ -552,18 +563,17 @@ def returnSales(page=None):
                                      sealreturngoods.sealreturngoods_addtime,
                                      client.client_name).order_by(
             sealreturngoods.sealreturngoods_id.desc()
-        ).filter_by(form.data['goods_name'] == sealreturngoods.sealreturngoods_user_name, sealreturngoods_supplier=client.client_id).paginate(
+        ).filter_by(form.data['goods_name'] == sealreturngoods.sealreturngoods_user_name,
+                    sealreturngoods_supplier=client.client_id).paginate(
             page=page, per_page=4)
         return render_template("admin/salesOrder.html", form=form, page_data=page_data)
 
 
-
-
 # 删除销售退货订单
-@admin.route("/dellreturnsaleses/",methods=["GET"])
+@admin.route("/dellreturnsaleses/", methods=["GET"])
 @admin_login_req
 def dellreturnsaleses():
-    ids=request.args.get('id')
+    ids = request.args.get('id')
     names = sealreturngoods.query.filter_by(sealreturngoods_id=ids).first()
     try:
 
@@ -574,11 +584,12 @@ def dellreturnsaleses():
         db.session.flush()
     return "success"
 
+
 # 客户管理
-@admin.route("/customerz/<int:page>",methods=["GET","POST"])
+@admin.route("/customerz/<int:page>", methods=["GET", "POST"])
 @admin_login_req
 def customerz(page=None):
-    form=customesserch()
+    form = customesserch()
     if page is None:
         page = 1
 
@@ -604,12 +615,11 @@ def customerz(page=None):
         return render_template("admin/customerz.html", form=form, page_data=page_data)
 
 
-
 # 增加客户
-@admin.route("/addCustomerz/",methods=["GET","POST"])
+@admin.route("/addCustomerz/", methods=["GET", "POST"])
 @admin_login_req
 def addCustomerz():
-    form=addcustomes()
+    form = addcustomes()
     if form.validate_on_submit():
         data = form.data
         names = client.query.filter_by(client_name=data['name']).count()
@@ -625,14 +635,14 @@ def addCustomerz():
         db.session.add(names)
         db.session.commit()
         time.sleep(2)
-    return render_template("admin/addCustomerz.html",form=form)
+    return render_template("admin/addCustomerz.html", form=form)
 
 
 # 删除客户
-@admin.route("/dellcustomer/",methods=['GET'])
+@admin.route("/dellcustomer/", methods=['GET'])
 @admin_login_req
 def dellcustomer():
-    ids=request.args.get('id')
+    ids = request.args.get('id')
     names = client.query.filter_by(client_id=ids).first()
     try:
 
@@ -644,7 +654,6 @@ def dellcustomer():
     return "success"
 
 
-
 # 财务模块
 # 员工工资
 @admin.route("/employeeWages/")
@@ -652,17 +661,20 @@ def dellcustomer():
 def employeeWages():
     return render_template("admin/employeeWages.html")
 
+
 # 进购利润
 @admin.route("/procurementfunds/")
 @admin_login_req
 def procurementfunds():
     return render_template("admin/ProcurementFunds.html")
 
+
 # 销售利润
 @admin.route("/salesfunds/")
 @admin_login_req
 def salesfunds():
     return render_template("admin/SalesFunds.html")
+
 
 # 总利润
 @admin.route("/totalprofit/")
@@ -671,11 +683,10 @@ def totalprofit():
     return render_template("admin/TotalProfit.html")
 
 
-
 # 仓库模块
 
 # 库存信息
-@admin.route("/seeWarehouse/<int:page>",methods=["GET","POST"])
+@admin.route("/seeWarehouse/<int:page>", methods=["GET", "POST"])
 @admin_login_req
 def seeWarehouse(page=None):
     form = warehouseserch()
@@ -684,7 +695,8 @@ def seeWarehouse(page=None):
 
     if (form.data['name'] is None or form.data['name'] == '') and (
             form.data['gys'] is None or form.data['gys'] == ''):
-        page_data=db.session.query(warehouse.warehouse_goods_name,warehouse.warehouse_goods_num,warehouse.warehouse_supplier_name,goods.goods_price).order_by(
+        page_data = db.session.query(warehouse.warehouse_goods_name, warehouse.warehouse_goods_num,
+                                     warehouse.warehouse_supplier_name, goods.goods_price).order_by(
             warehouse.warehouse_id.desc()
         ).filter_by(warehouse_goods_name=goods.goods_name).paginate(page=page, per_page=4)
         return render_template("admin/seeWarehouse.html", form=form, page_data=page_data)
@@ -693,7 +705,8 @@ def seeWarehouse(page=None):
         page_data = db.session.query(warehouse.warehouse_id, warehouse.warehouse_goods_num,
                                      warehouse.warehouse_supplier_name, goods.goods_price).order_by(
             warehouse.warehouse_id.desc()
-        ).filter_by(form.data['name'] == warehouse.warehouse_goods_name,warehouse_goods_name=goods.goods_name).paginate(page=page, per_page=4)
+        ).filter_by(form.data['name'] == warehouse.warehouse_goods_name,
+                    warehouse_goods_name=goods.goods_name).paginate(page=page, per_page=4)
 
         return render_template("admin/seeWarehouse.html", form=form, page_data=page_data)
 
@@ -708,13 +721,11 @@ def seeWarehouse(page=None):
         return render_template("admin/seeWarehouse.html", form=form, page_data=page_data)
 
 
-
-
 # 仓库信息删除
-@admin.route("/dellwarehouse/",methods=["GET"])
+@admin.route("/dellwarehouse/", methods=["GET"])
 @admin_login_req
 def dellwarehouse():
-    ids=request.args.get('id')
+    ids = request.args.get('id')
     names = warehouse.query.filter_by(warehouse_id=ids).first()
     try:
         db.session.delete(names)
@@ -724,8 +735,9 @@ def dellwarehouse():
         db.session.flush()
     return "success"
 
+
 # 采购入库单
-@admin.route("/enteringWarehouse/<int:page>",methods=["GET","POST"])
+@admin.route("/enteringWarehouse/<int:page>", methods=["GET", "POST"])
 @admin_login_req
 def enteringWarehouse(page=None):
     form = enteringwarehouseserach()
@@ -754,10 +766,10 @@ def enteringWarehouse(page=None):
 
 
 # 删除采购入库
-@admin.route("/dellcgrk/",methods=["GET"])
+@admin.route("/dellcgrk/", methods=["GET"])
 @admin_login_req
 def dellcgrk():
-    ids=request.args.get('id')
+    ids = request.args.get('id')
     names = inwarehouse.query.filter_by(inwarehouse_id=ids).first()
     try:
 
@@ -768,11 +780,12 @@ def dellcgrk():
         db.session.flush()
     return "success"
 
+
 # 出库单
-@admin.route("/outWarehousing/<int:page>",methods=['GET',"POST"])
+@admin.route("/outWarehousing/<int:page>", methods=['GET', "POST"])
 @admin_login_req
 def outWarehousing(page=None):
-    form=outWarehousingsearch()
+    form = outWarehousingsearch()
     if page is None:
         page = 1
     if (form.data['name'] is None or form.data['name'] == '') and (
@@ -797,7 +810,8 @@ def outWarehousing(page=None):
                                      stock.stock_addtime,
                                      client.client_name).order_by(
             stock.stock_id.desc()
-        ).filter_by(form.data['name'] == stock.stock_goods,stock_supplier=client.client_id).paginate(page=page, per_page=4)
+        ).filter_by(form.data['name'] == stock.stock_goods, stock_supplier=client.client_id).paginate(page=page,
+                                                                                                      per_page=4)
         return render_template("admin/enteringWarehouse.html", form=form, page_data=page_data)
 
     if (form.data['name'] is None or form.data['name'] == '') and (
@@ -810,15 +824,16 @@ def outWarehousing(page=None):
                                      stock.stock_addtime,
                                      client.client_name).order_by(
             stock.stock_id.desc()
-        ).filter_by(form.data['gys'] == stock.stock_user_name,stock_supplier=client.client_id).paginate(page=page, per_page=4)
+        ).filter_by(form.data['gys'] == stock.stock_user_name, stock_supplier=client.client_id).paginate(page=page,
+                                                                                                         per_page=4)
         return render_template("admin/enteringWarehouse.html", form=form, page_data=page_data)
 
 
 # 删除出库订单
-@admin.route("/dellckdd/",methods=["GET"])
+@admin.route("/dellckdd/", methods=["GET"])
 @admin_login_req
 def dellckdd():
-    ids=request.args.get('id')
+    ids = request.args.get('id')
     names = stock.query.filter_by(stock_id=ids).first()
     try:
         db.session.delete(names)
@@ -829,72 +844,47 @@ def dellckdd():
     return "success"
 
 
-
-
-
-
-
 # 统计模块
 # 库存统计
 @admin.route("/inventoryStatistics/")
 @admin_login_req
 def inventoryStatistics():
-    _bar,javascript_snippet = pies()
+    pie = pie_chart()
     return render_template(
         "admin/inventoryStatistics.html",
-        chart_id=_bar.chart_id,
-        host=url_for('static', filename='assets/js'),
-        renderer=_bar.renderer,
-        my_width="50%",
-        my_height=500,
-        custom_function=javascript_snippet.function_snippet,
-        options=javascript_snippet.option_snippet,
-        script_list=_bar.get_js_dependencies(),
+        chart_id=pie.chart_id,
+        renderer=pie.renderer,
+        options=pie.dump_options(),
     )
 
-
-# 订单统计
 @admin.route("/purchasingStatistics/")
 @admin_login_req
 def purchasingStatistics():
-    _bar, javascript_snippet = bars()
+    bar = bar_chart()
     return render_template(
         "admin/purchasingStatistics.html",
-        chart_id=_bar.chart_id,
-        host=url_for('static',filename='assets/js'),
-        renderer=_bar.renderer,
-        my_width="50%",
-        my_height=500,
-        custom_function=javascript_snippet.function_snippet,
-        options=javascript_snippet.option_snippet,
-        script_list=_bar.get_js_dependencies(),
+        chart_id=bar.chart_id,
+        renderer=bar.renderer,
+        options=bar.dump_options(),
     )
 
-
-# 销售统计
 @admin.route("/salesStatistics/")
 @admin_login_req
 def salesStatistics():
-    line, javascript_snippet = lines()
+    line = line_chart()
     return render_template(
         "admin/salesStatistics.html",
         chart_id=line.chart_id,
-        host=url_for('static', filename='assets/js'),
         renderer=line.renderer,
-        my_width="50%",
-        my_height=500,
-        custom_function=javascript_snippet.function_snippet,
-        options=javascript_snippet.option_snippet,
-        script_list=line.get_js_dependencies(),
+        options=line.dump_options(),
     )
 
-
 # 基本模块
-@admin.route("/persionDetail/",methods=['GET','POST'])
+@admin.route("/persionDetail/", methods=['GET', 'POST'])
 @admin_login_req
 def persionDetail():
-    form=alertpasswd()
-    usermessage=User.query.filter(User.user_count==session["admin"]).first()
+    form = alertpasswd()
+    usermessage = User.query.filter(User.user_count == session["admin"]).first()
     admin = User.query.filter_by(user_count=usermessage.user_count).first()
     if form.validate_on_submit():
         if not admin.check_pwd(form.data['account']):
@@ -909,10 +899,11 @@ def persionDetail():
         session.pop('admin', None)
         return 'Success'
 
-    return render_template("admin/persionDetail.html",form=form,usermessage=usermessage)
+    return render_template("admin/persionDetail.html", form=form, usermessage=usermessage)
+
 
 # 忘记密码
-@admin.route("/wjmm/",methods=['GET','POST'])
+@admin.route("/wjmm/", methods=['GET', 'POST'])
 def wjmm():
     form = wjpasswd()
     if form.validate_on_submit():
@@ -927,11 +918,11 @@ def wjmm():
             return render_template("admin/wjmm.html", form=form)
 
         admin.user_pwd = generate_password_hash((form.data['pwd']))
-        mails=[]
+        mails = []
         mails.append(form.data['account'])
         try:
             msg = Message('修改密码通知', sender='gchase@163.com', recipients=mails)
-            msg.html = '<span>尊敬的</span>'+usermessage.user_name+'，您好：<br>您在we商贸中申请找回密码<br><b style="background-color: #FF0000">重设密码已完成,若非本人操作</b><br>请及时联系管理员修改<b>ganiner@163.com</b>'
+            msg.html = '<span>尊敬的</span>' + usermessage.user_name + '，您好：<br>您在we商贸中申请找回密码<br><b style="background-color: #FF0000">重设密码已完成,若非本人操作</b><br>请及时联系管理员修改<b>ganiner@163.com</b>'
             mail.send(msg)
             flash("修改成功")
             db.session.commit()
@@ -942,10 +933,9 @@ def wjmm():
     return render_template("admin/wjmm.html", form=form)
 
 
-
 # 管理模块
 # 员工管理
-@admin.route("/admin_list/<int:page>",methods=["GET","POST"])
+@admin.route("/admin_list/<int:page>", methods=["GET", "POST"])
 @admin_login_req
 @admin_power
 def admin_list(page=None):
@@ -955,17 +945,17 @@ def admin_list(page=None):
         User.user_id.desc()
     ).paginate(page=page, per_page=4)
 
+    return render_template("admin/admin_list.html", page_data=page_data)
 
-    return render_template("admin/admin_list.html",page_data=page_data)
 
 # 员工状态
-@admin.route("/admin/admin_pass/",methods=["GET"])
+@admin.route("/admin/admin_pass/", methods=["GET"])
 @admin_login_req
 @admin_power
 def admin_pass():
-    ids=request.args.get('id')
+    ids = request.args.get('id')
     ids = User.query.filter_by(user_id=ids).first()
-    User.user_ispass=True
+    User.user_ispass = True
     try:
         db.session.commit()
     except:
@@ -973,8 +963,9 @@ def admin_pass():
         db.session.flush()
     return "success"
 
+
 # 部门管理
-@admin.route("/section/<int:page>",methods=["GET","POST"])
+@admin.route("/section/<int:page>", methods=["GET", "POST"])
 @admin_login_req
 @admin_power
 def sections(page=None):
@@ -983,14 +974,15 @@ def sections(page=None):
     page_data = section.query.order_by(
         section.section_id.desc()
     ).paginate(page=page, per_page=4)
-    return render_template("admin/section.html",page_data=page_data)
+    return render_template("admin/section.html", page_data=page_data)
+
 
 # 添加部门
-@admin.route("/addSection/",methods=["GET","POST"])
+@admin.route("/addSection/", methods=["GET", "POST"])
 @admin_login_req
 @admin_power
 def addSection():
-    form=addsection()
+    form = addsection()
     if form.validate_on_submit():
         data = form.data
         names = section.query.filter_by(section_name=data['name']).count()
@@ -1003,12 +995,11 @@ def addSection():
         db.session.add(names)
         db.session.commit()
         time.sleep(2)
-    return render_template("admin/addSection.html",form=form)
-
+    return render_template("admin/addSection.html", form=form)
 
 
 # 职务管理
-@admin.route("/dutylist/<int:page>",methods=["GET","POST"])
+@admin.route("/dutylist/<int:page>", methods=["GET", "POST"])
 @admin_login_req
 @admin_power
 def dutylist(page=None):
@@ -1017,14 +1008,15 @@ def dutylist(page=None):
     page_data = duty.query.order_by(
         duty.duty_id.desc()
     ).paginate(page=page, per_page=4)
-    return render_template("admin/dutylist.html",page_data=page_data)
+    return render_template("admin/dutylist.html", page_data=page_data)
+
 
 # 添加职务
-@admin.route("/addduty/",methods=['GET',"POST"])
+@admin.route("/addduty/", methods=['GET', "POST"])
 @admin_login_req
 @admin_power
 def addduty():
-    form=adddutys()
+    form = adddutys()
     if form.validate_on_submit():
         data = form.data
         names = duty.query.filter_by(duty_name=data['name']).count()
@@ -1037,47 +1029,47 @@ def addduty():
         db.session.add(names)
         db.session.commit()
         time.sleep(2)
-    return render_template("admin/addduty.html",form=form)
-
+    return render_template("admin/addduty.html", form=form)
 
 
 # 修改权限
-@admin.route('/comminrole/',methods=['GET',"POST"])
+@admin.route('/comminrole/', methods=['GET', "POST"])
 @admin_login_req
 @admin_power
 def comminrole():
-    form=powerss()
+    form = powerss()
     if form.validate_on_submit():
-        users=User.query.filter_by(user_name=form.data['account'])
-    return render_template("admin/comminrole.html",form=form)
+        users = User.query.filter_by(user_name=form.data['account'])
+    return render_template("admin/comminrole.html", form=form)
+
 
 # 修改职务和部门
-@admin.route('/bumen/',methods=['GET',"POST"])
+@admin.route('/bumen/', methods=['GET', "POST"])
 @admin_login_req
 @admin_power
 def bumen():
-    form=bumens()
+    form = bumens()
     if form.validate_on_submit():
-        users=User.query.filter_by(user_id=form.data['account']).first()
+        users = User.query.filter_by(user_id=form.data['account']).first()
         users.user_duty = form.data['dutyser']
         users.user_section = form.data['sectionsr']
         db.session.commit()
         time.sleep(2)
-    return render_template("admin/bumen.html",form=form)
+    return render_template("admin/bumen.html", form=form)
 
 
 # 备份
-@admin.route("/beifen/",methods=['GET','POST'])
+@admin.route("/beifen/", methods=['GET', 'POST'])
 @admin_login_req
 @admin_power
 def beifen():
     key = "传入数据库密码"
     name = on_created()
-    path = "app/backup/"+name
+    path = "app/backup/" + name
     form = beifenser()
 
     if form.validate_on_submit():
-        os.system("mysqldump -uroot -p{0} sm2.0 > {1}.dump" .format(key,path))
-        os.system("mysqldump  -uroot -p{0} --host=localhost --all-databases> {1}.txt" .format (key,path))
+        os.system("mysqldump -uroot -p{0} sm2.0 > {1}.dump".format(key, path))
+        os.system("mysqldump  -uroot -p{0} --host=localhost --all-databases> {1}.txt".format(key, path))
         flash("备份完成")
-    return render_template("admin/beifen.html",form=form)
+    return render_template("admin/beifen.html", form=form)

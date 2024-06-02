@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
-# author:Agam
-# datetime:2018-11-05
+# sam1
+# datetime:2024-6-02
 
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
@@ -11,7 +11,7 @@ app=Flask(__name__)
 
 
 # 数据库配置
-app.config["SQLALCHEMY_DATABASE_URI"]="mysql+pymysql://uesr:password@127.0.0.1:3306/dbname?charset=utf8"
+app.config["SQLALCHEMY_DATABASE_URI"]="mysql+pymysql://root:123456@127.0.0.1:3306/pas?charset=utf8"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"]=True
 # 密钥配置，在生产环境中使用系统自动生成
 app.config['SECRET_KEY']='d890fbe7e26c4c3eb557b6009e3f4d3d'

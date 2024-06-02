@@ -1,12 +1,12 @@
 # -*- coding:utf-8 -*-
-# author:Agam
-# datetime:2018-11-05
+# sam1
+# datetime:2024-6-02
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField, TextAreaField, FloatField, IntegerField
 from wtforms.validators import DataRequired
 from app.models import goods, supplier, User, power, client, duty, section, warehouse
-
+from app.apps import app
 
 # 登陆表单
 class LoginForm(FlaskForm):
@@ -368,7 +368,8 @@ class addgoodsname(FlaskForm):
 
 
 # 添加订单
-goodsall = goods.query.all()
+with app.app_context():
+    goodsall = goods.query.all()
 
 class increasePurchaseOrders(FlaskForm):
     goods_name = SelectField(

@@ -1,7 +1,7 @@
 #-*- coding:utf-8 -*-
-# author:Agam
-# datetime:2018-11-05
-
+# sam1
+# datetime:2024-6-02
+import pretty_errors
 from app.apps import app
 
 if __name__ == '__main__':

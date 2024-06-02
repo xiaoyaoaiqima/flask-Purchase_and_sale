@@ -1,23 +1,16 @@
-
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
     <title>Proudly presented by ECharts</title>
-    {% for jsfile_name in script_list %}
-
-        <script src="{{ host }}/{{ jsfile_name }}.js"></script>
-    {% endfor %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/echarts.js') }}"></script>
 </head>
-
 <body>
-<div id="{{ chart_id }}" style="width:{{ my_width }};height:{{ my_height }}px;"></div>
+    <div id="{{ chart_id }}" style="width: 50%; height: 500px;"></div>
     <script type="text/javascript">
         window.onload = function() {
             setTimeout(function() {
-                var myChart_{{ chart_id }} = echarts.init(document.getElementById('{{ chart_id }}'), null, {renderer: '{{ renderer}}'});
-                {{ custom_function }}
+                var myChart_{{ chart_id }} = echarts.init(document.getElementById('{{ chart_id }}'), null, {renderer: '{{ renderer }}'});
                 var option_{{ chart_id }} = {{ options | safe }};
                 myChart_{{ chart_id }}.setOption(option_{{ chart_id }});
                 window.onresize = function() {
@@ -26,7 +19,5 @@
             }, 1000);
         };
     </script>
-
 </body>
-
 </html>
